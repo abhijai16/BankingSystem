@@ -102,4 +102,9 @@ public final class Money {
     public int hashCode() {
         return Objects.hash(this.amount, this.currency);
     }
+
+    @Override
+    public String toString() {
+        return this.currency + " " + this.amount.toPlainString();
+    }
 }
