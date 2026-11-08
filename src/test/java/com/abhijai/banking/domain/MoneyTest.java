@@ -81,7 +81,7 @@ public class MoneyTest {
 //    @Test
 //    void shouldRejectAdditionOfDifferentCurrencies(){
 //        Money a = new Money(new BigDecimal("500"), "INR");
-//        Money b = new Money(new BigDecimal("200"), "USD");
+//        Money b = new Money(new BigDecimal("200"), "USD"); ---this will throw exception as we haven't allowed other currencies.---
 //
 //        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
 //            a.add(b);
