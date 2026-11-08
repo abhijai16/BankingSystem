@@ -22,11 +22,11 @@ public final class BankAccount {
         Objects.requireNonNull(ownerCustomerId, "Owner Customer Id cannot be null");
         Objects.requireNonNull(openingDeposit, "Opening Deposit cannot be null");
 
-        if (accountNumber.isBlank()) {
+        if(accountNumber.isBlank()){
             throw new IllegalArgumentException("Account number cannot be blank");
         }
 
-        if (ownerCustomerId.isBlank()) {
+        if(ownerCustomerId.isBlank()){
             throw new IllegalArgumentException("Owner Customer ID cannot be blank");
         }
 
