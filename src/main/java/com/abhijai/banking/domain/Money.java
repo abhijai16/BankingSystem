@@ -79,6 +79,10 @@ public final class Money {
         return this.amount.compareTo(BigDecimal.ZERO) == 0;
     }
 
+    public boolean isNegative() {
+        return amount.signum() < 0;
+    }
+
     public Money negate(){
         return new Money(this.amount.negate(), this.currency);
     }
