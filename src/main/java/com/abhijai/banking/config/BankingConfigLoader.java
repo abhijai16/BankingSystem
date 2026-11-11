@@ -9,15 +9,27 @@ import java.util.Properties;
 
 public final class BankingConfigLoader {
 
-    private static final String CONFIG_FILE = "/banking.properties";
+    private final String configFile;
+
+    public BankingConfigLoader() {
+        this("/banking.properties");
+    }
+
+    BankingConfigLoader(String configFile) {
+        if (configFile == null || configFile.isBlank()) {
+            throw new IllegalArgumentException("Configuration file path cannot be blank");
+        }
+
+        this.configFile = configFile;
+    }
 
     public BankingConfig load(){
 
         Properties properties = new Properties();
 
-        try(InputStream input = BankingConfigLoader.class.getResourceAsStream(CONFIG_FILE)){
+        try(InputStream input = BankingConfigLoader.class.getResourceAsStream(configFile)){
             if(input == null){
-                throw new IllegalStateException("Configuration file not found: " + CONFIG_FILE);
+                throw new IllegalStateException("Configuration file not found: " + configFile);
             }
 
             properties.load(input);
