@@ -4,13 +4,21 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class Money {
 
     private final BigDecimal amount;
     private final String currency;
 
-    public Money(BigDecimal amount, String currency){
+    @JsonCreator
+    public Money(
+            @JsonProperty("amount") BigDecimal amount,
+            @JsonProperty("currency") String currency
+    ){
+
         // Null values are not accepted.
         Objects.requireNonNull(amount, "Amount cannot be null");
         Objects.requireNonNull(currency, "Currency cannot be null");
@@ -70,15 +78,18 @@ public final class Money {
         return this.amount.compareTo(other.amount);
     }
 
+    @JsonIgnore
     public boolean isPositive(){
         return this.amount.compareTo(BigDecimal.ZERO) > 0;
 
     }
 
+    @JsonIgnore
     public boolean isZero(){
         return this.amount.compareTo(BigDecimal.ZERO) == 0;
     }
 
+    @JsonIgnore
     public boolean isNegative() {
         return amount.signum() < 0;
     }
