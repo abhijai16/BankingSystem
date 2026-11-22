@@ -57,10 +57,15 @@ public final class BankingApplication {
         repository.load();
         BankingConfig config = new BankingConfigLoader().load();
         PrintWriter out = new PrintWriter(System.out, true);
-        out.println("Banking System | Local INR simulator");
+        System.out.println("""
+                                ▗▄▄▖  ▗▄▖ ▗▖  ▗▖▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖     ▗▄▄▖▗▖  ▗▖▗▄▄▖▗▄▄▄▖▗▄▄▄▖▗▖  ▗▖
+                                ▐▌ ▐▌▐▌ ▐▌▐▛▚▖▐▌▐▌▗▞▘  █  ▐▛▚▖▐▌▐▌       ▐▌    ▝▚▞▘▐▌     █  ▐▌   ▐▛▚▞▜▌
+                                ▐▛▀▚▖▐▛▀▜▌▐▌ ▝▜▌▐▛▚▖   █  ▐▌ ▝▜▌▐▌▝▜▌     ▝▀▚▖  ▐▌  ▝▀▚▖  █  ▐▛▀▀▘▐▌  ▐▌
+                                ▐▙▄▞▘▐▌ ▐▌▐▌  ▐▌▐▌ ▐▌▗▄█▄▖▐▌  ▐▌▝▚▄▞▘    ▗▄▄▞▘  ▐▌ ▗▄▄▞▘  █  ▐▙▄▄▖▐▌  ▐▌
+                                
+                                """);
         out.println("Opening deposit from " + config.getMinimumOpeningDeposit() + ". Transactions "
                 + config.getMinimumTransactionAmount() + " to " + config.getMaximumTransactionAmount() + ".");
-        out.println("Data directory: " + directory.toAbsolutePath().normalize());
         InputHandler input = new InputHandler(System.console(), new InputStreamReader(System.in), out);
         new ConsoleUI(input, out,
                 new AuthenticationService(repository, config, new PasswordHasher(), Clock.systemUTC()),

@@ -46,7 +46,7 @@ public final class ConsoleUI {
         try {
             while (true) {
                 try {
-                    if (customer == null) {
+                    if(customer == null){
                         out.println("\n1. Register   2. Log in   0. Exit");
                         String option = input.line("Choice:");
                         if (option.equals("0")) {
