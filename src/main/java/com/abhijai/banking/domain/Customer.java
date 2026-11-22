@@ -1,6 +1,7 @@
 package com.abhijai.banking.domain;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,10 +12,22 @@ public final class Customer {
     private String loginId;
     private String passwordHash;
     private final Instant createdAt;
+    private int failedLoginAttempts;
+    private Instant lockedUntil;
 
     private final List<BankAccount> accounts;
 
     public Customer(String customerId, String loginId, String passwordHash){
+        this(customerId, loginId, passwordHash, Instant.now(), 0, null);
+    }
+
+    public static Customer restore(String customerId, String loginId, String passwordHash,
+                                   Instant createdAt, int failedLoginAttempts, Instant lockedUntil) {
+        return new Customer(customerId, loginId, passwordHash, createdAt, failedLoginAttempts, lockedUntil);
+    }
+
+    private Customer(String customerId, String loginId, String passwordHash,
+                     Instant createdAt, int failedLoginAttempts, Instant lockedUntil) {
         Objects.requireNonNull(customerId, "Customer Id cannot be null");
         Objects.requireNonNull(loginId, "Login Id cannot be null");
         Objects.requireNonNull(passwordHash, "Password Hash cannot be null");
@@ -31,7 +44,12 @@ public final class Customer {
             throw new IllegalArgumentException("Password Hash cannot be blank");
         }
 
-        this.createdAt = Instant.now();
+        if (failedLoginAttempts < 0 || (lockedUntil != null && failedLoginAttempts == 0)) {
+            throw new IllegalArgumentException("Invalid login attempt count");
+        }
+        this.createdAt = Objects.requireNonNull(createdAt, "Creation time cannot be null");
+        this.failedLoginAttempts = failedLoginAttempts;
+        this.lockedUntil = lockedUntil;
         this.customerId = customerId;
         this.loginId = loginId;
         this.passwordHash = passwordHash;
@@ -52,6 +70,35 @@ public final class Customer {
 
     public Instant getCreatedAt() {
         return this.createdAt;
+    }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
+    }
+
+    public boolean isLoginLocked(Instant now) {
+        return lockedUntil != null && now.isBefore(lockedUntil);
+    }
+
+    public void recordFailedLogin(Instant now, int limit, long cooldownMinutes) {
+        if (isLoginLocked(now)) {
+            return;
+        }
+        if (lockedUntil != null) {
+            clearLoginFailures();
+        }
+        if (++failedLoginAttempts >= limit) {
+            lockedUntil = now.plus(cooldownMinutes, ChronoUnit.MINUTES);
+        }
+    }
+
+    public void clearLoginFailures() {
+        failedLoginAttempts = 0;
+        lockedUntil = null;
     }
 
     public List<BankAccount> getAccounts() {
