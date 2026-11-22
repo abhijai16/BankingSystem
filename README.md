@@ -1,85 +1,90 @@
+<p align="center">
+  <img src="cover/cover.jpeg" alt="Ticket Booking System CLI" width="900">
+</p>
+
 # Banking System
 
-A local Core Java console project for practising accounts, authentication and transactions with simulated Indian rupees. Each customer can open several accounts. The app saves them between runs.
+A Java console application for managing simulated bank accounts in Indian rupees. Register a customer, open accounts, and move money between them. Each payment appears on both account statements, and balances are saved locally when you exit.
 
-## Run the downloaded project
+## Run from source
 
-1. Extract the entire ZIP. Open a terminal in the `BankingSystem` folder containing `BankingSystem.jar` and `lib`.
-2. With Java 17 or newer installed, run the following command. The three Jackson libraries used at runtime are included.
+Install a **JDK 17 or newer**. Open a terminal in the folder containing [build.gradle](build.gradle) and run the command for your system. The Gradle wrapper downloads the build tools and dependencies on the first run.
 
-```sh
-java -jar BankingSystem.jar
-```
+| | Command |
+| --- | --- |
+| Linux or macOS | `./gradlew --console=plain run` |
+| Windows PowerShell | `.\gradlew.bat --console=plain run` |
 
-3. Choose **1. Register**. Pick a login ID of 3–40 letters, digits, dots, hyphens or underscores, and a password of 8–128 characters. Registration signs you in. On future runs choose **2. Log in**. A normal terminal hides the password as you type. An IDE's input console may echo it.
+In IntelliJ IDEA, open the same folder as a Gradle project. You can use its Terminal or select **Gradle → Tasks → application → run**. When you change the source, stop the running app and run the task again to see your edits.
 
-## Try a transfer and check the math
+## Try it with two accounts
 
-You can do this whole exercise with one login and two accounts.
+1. At the welcome menu, choose **1. Register**. Pick a login ID and password. Registration signs you in. Your customer profile can own several accounts.
+2. Choose **1. Open account** twice. Open the first account with `1000` and the second with `500`. Choose **2. My accounts** to see their ten-digit account numbers. Copy the second number.
+3. Choose **5. Transfer**. Select the first account as the source, enter the second account's number as the destination, enter `200`, and use `demo-001` as the reference. Review the details and enter `y`.
+4. Choose **6. Statement** for each account. Look for the entries that share the reference `demo-001`.
 
-1. Choose **1. Open account** and enter `1000`. Call this account A in your notes.
-2. Choose **1. Open account** again and enter `500`. Copy this second account's ten-digit number. Choose **2. My accounts** to see both numbers and balances.
-3. Choose **5. Transfer**. Select A as the source, paste B's account number, enter `200` and use the reference `practice-001`. Check the details and enter `y`.
-4. Choose **6. Statement** for A, then for B. Find the same reference in both statements.
-
-| Account | Before | Entry with reference `practice-001` | After |
+| Account | Opening deposit | Transfer entry | Balance after transfer |
 | --- | ---: | --- | ---: |
-| A | ₹1,000.00 | `TRANSFER_OUT` −₹200.00 | ₹800.00 |
-| B | ₹500.00 | `TRANSFER_IN` +₹200.00 | ₹700.00 |
+| First | ₹1,000.00 | `TRANSFER_OUT` −₹200.00 | ₹800.00 |
+| Second | ₹500.00 | `TRANSFER_IN` +₹200.00 | ₹700.00 |
 
-5. Repeat the transfer with the **same source, destination, amount and reference**. The service returns the first receipt. A's balance is still ₹800.00. A different reference identifies a new payment.
-6. Log out with **0**, exit with **0**, then start the app from the same folder and log in again. Both statements and balances are still there. You can also send money to an account belonging to another registered customer if you know its number.
+Repeat step 3 with the **same reference and details**. The app returns the original transfer receipt, so the balances stay at ₹800 and ₹700. This is **idempotency**. For a genuinely new payment, use a new reference or press Enter to generate one.
 
-## Follow that payment through the Java code
+## How the application works
 
-The production source is under `src/main/java/com/abhijai/banking/`.
+[BankingApplication](src/main/java/com/abhijai/banking/app/BankingApplication.java) selects the data directory, loads the saved state and banking rules, then passes the services into [ConsoleUI](src/main/java/com/abhijai/banking/console/ConsoleUI.java). The console keeps the signed-in customer's ID and uses it when calling a service. For example, a withdrawal includes the customer ID as well as the account number so the service can check ownership.
 
-| Where to look | What happens during the example |
-| --- | --- |
-| `app/BankingApplication.java` | `main` selects the data folder, loads the rules and connects the console, services and repository. All four services use the same repository. |
-| `console/ConsoleUI.java` and `console/InputHandler.java` | Menu option 5 reads the account numbers and an INR amount. After confirmation it calls `TransactionService.transfer(customerId, from, to, amount, reference)`. The customer ID comes from the signed-in session. |
-| `service/TransactionService.java` | `transfer` checks who owns A and whether the reference was used. For a new transfer it checks the amount and destination, withdraws from A, deposits into B and records both entries. |
-| `domain/BankAccount.java` and `domain/Money.java` | The account enforces rules such as sufficient funds and active status. `Money` uses `BigDecimal` with two decimal places, so balances such as ₹499.95 retain their exact paise value. |
-| `persistence/json/JsonBankingRepository.java` | `update` takes a file lock, loads a fresh snapshot and runs the service operation on that in-memory copy. When the operation succeeds, it saves one new snapshot containing both balances, the transfer and both entries. |
-| `service/StatementService.java` | `statement` checks account ownership and returns the account's entries in posting order. The console displays the signed amount, balance after each entry, UTC time and transfer reference. |
+| Menu action | Code to follow | What happens |
+| --- | --- | --- |
+| Register or log in | [AuthenticationService](src/main/java/com/abhijai/banking/service/AuthenticationService.java) | Registration creates a customer ID. Login looks up the login ID without case sensitivity and checks the password using [PasswordHasher](src/main/java/com/abhijai/banking/security/PasswordHasher.java). Each password has a random salt and a PBKDF2-HMAC-SHA256 hash. |
+| Open, list or close accounts | [AccountService](src/main/java/com/abhijai/banking/service/AccountService.java) | Opening creates an account linked to its owner and records the opening deposit as its first entry. Closing requires a zero balance. Its statement remains available afterward. |
+| Deposit, withdraw or transfer | [TransactionService](src/main/java/com/abhijai/banking/service/TransactionService.java) | The service checks ownership and amount limits. A [BankAccount](src/main/java/com/abhijai/banking/domain/BankAccount.java) enforces its status and available balance. [Money](src/main/java/com/abhijai/banking/domain/Money.java) uses two-decimal `BigDecimal` amounts to preserve exact paise. |
+| Read a statement | [StatementService](src/main/java/com/abhijai/banking/service/StatementService.java) | The owner sees entries in posting order with UTC time, signed amount, balance after each entry and any transfer reference. |
+| Change credentials or log out | [ConsoleUI](src/main/java/com/abhijai/banking/console/ConsoleUI.java) | Changing a login ID or password requires the current password. Logging out clears the session and returns to the welcome menu. |
 
-**What happens if B is closed?** A's withdrawal can succeed on the in-memory copy before B rejects the deposit. The exception ends the operation before the repository writes the file. A keeps its original balance, B receives nothing and neither statement gains an entry. This all-or-nothing behavior is called **atomicity**. You can see the exact case in `BankingWorkflowTest.failingDestinationAfterDebitLeavesBothPrimaryAndBackupUntouched`.
+### What happens when you confirm a transfer?
 
-## What the completed version adds
-
-| Area | Changes from the uploaded banking project |
-| --- | --- |
-| Login | Registration, case-insensitive login, password and login ID changes, and a failed-attempt cooldown that survives a restart. `PasswordHasher` stores a random salt and a PBKDF2-HMAC-SHA256 hash. At login it derives a hash from the entered password and compares the two. |
-| Accounts | Opening, listing balances and closing an empty account. The opening deposit is the first statement entry. Closed accounts keep their statements. |
-| Payments | Deposits, withdrawals, transfers between accounts, running balances and a shared reference for each transfer. Transfers can be retried using the original reference. |
-| Storage | JSON snapshots and a previous-version backup. The DTOs (data transfer objects) describe the file format. On load, they reconnect accounts to customers and check the statement totals against balances. |
-| Existing code | The original money, account, transfer, transaction and configuration types provide the core rules. The account and customer classes can now reload their saved timestamps and status. `BankingState` also records changes and enforces account ownership through its lookup methods. |
-| Build and tests | A console entry point, a Gradle `run` task and a `portable` build that produces the runnable JAR and its libraries. The 131 original tests are joined by 18 tests for the new workflows. |
-
-## Rules and saved data
-
-The default opening deposit is at least **₹500**. Subsequent deposits, withdrawals and transfers accept **₹1 to ₹1,00,000** per operation. After **five** failed login attempts the login is locked for **five minutes**. The settings live in `src/main/resources/banking.properties`. Rebuild after editing them. The original account model also enforces an opening floor of ₹500.
-
-By default the app saves to `data/` under the directory where you run it. To practise with a separate set of accounts, run `java -jar BankingSystem.jar --data-dir practice-data`.
-
-- `banking.json` holds customers, accounts, transaction entries and transfers. The balances and statements are readable local data.
-- `banking.json.bak` holds the previous saved version after a subsequent change. A file lock serializes updates from separate running copies. Each write uses a temporary file and an atomic replacement on the same local filesystem.
-- If the current snapshot is damaged or missing, use the command below in the same folder. Recovery validates the backup, keeps a copy of a damaged primary file, and restores the previous version. Changes made after that backup are outside the restored snapshot. With a custom data directory, pass the same `--data-dir` here.
-
-```sh
-java -jar BankingSystem.jar --restore-backup
+```mermaid
+flowchart TD
+    A["Confirm payment in the console"] --> B["Lock and load the latest bank state"]
+    B --> C{"Source belongs to this customer?"}
+    C -->|No| X["Reject the request"]
+    C -->|Yes| D{"Reference already used?"}
+    D -->|Same payment| E["Return existing receipt"]
+    D -->|Different payment| X
+    D -->|New reference| F["Validate amount and accounts"]
+    F --> G["Debit source and credit destination in memory"]
+    F -->|Invalid| X
+    G -->|Account rejects operation| X
+    G -->|Success| H["Record both entries and save one snapshot"]
+    H --> I["Return receipt"]
 ```
 
-## Build and test the source
+To trace the diagram, start in `TransactionService.transfer()` and step into [JsonBankingRepository.update()](src/main/java/com/abhijai/banking/persistence/json/JsonBankingRepository.java). The repository takes a file lock so two running copies cannot update the same balances at once. It loads a fresh snapshot, then runs the transfer on that in-memory copy.
 
-Use a JDK 17 or newer. The first Gradle build downloads the pinned build tools and dependencies. These commands work from the extracted project folder.
+Suppose the destination account has closed. The debit can succeed in memory before the destination rejects the credit. The exception exits the update before the file is written. The sender keeps the original balance and neither statement gains an entry. Saving both sides together is called **atomicity**.
 
-| Task | macOS or Linux | Windows PowerShell |
+## Rules and storage
+
+The defaults are in [banking.properties](src/main/resources/banking.properties). The opening deposit must be at least **₹500**. Each subsequent deposit, withdrawal or transfer must be between **₹1 and ₹1,00,000**, inclusive. Five failed login attempts trigger a five-minute cooldown that survives a restart.
+
+The app prints its data directory at startup. By default, it uses `data/` under the working directory. Start from the same directory on future runs to see the same accounts.
+
+| File | Purpose |
+| --- | --- |
+| `banking.json` | Current customers, accounts, transfers and statement entries. Jackson converts between Java objects and JSON. On load, the app checks balances against the statements and verifies both sides of each transfer. |
+| `banking.json.bak` | Previous saved snapshot after a subsequent change. The repository writes the new snapshot to a temporary file before replacing the current file. |
+| `banking.lock` | Coordinates file access across running copies that use the same data directory. |
+
+To practise with separate data, run `./gradlew --console=plain run --args="--data-dir practice-data"`. If the main snapshot there is missing or damaged and a backup exists, run `./gradlew run --args="--data-dir practice-data --restore-backup"`. Recovery restores the previous saved version and preserves a copy of a damaged main file. Use sample data for practice because the JSON contains readable account and transaction details.
+
+## Test and package
+
+| Goal | Gradle command | Result |
 | --- | --- | --- |
-| Run the tests | `./gradlew test` | `.\gradlew.bat test` |
-| Run the console from source | `./gradlew --console=plain run` | `.\gradlew.bat --console=plain run` |
-| Rebuild the portable app | `./gradlew portable` | `.\gradlew.bat portable` |
+| Run the tests | `./gradlew test` | Open `build/reports/tests/test/index.html` for the results. |
+| Build a shareable copy | `./gradlew portable` | Distribute the entire `build/portable/` folder. It contains the application JAR and its runtime libraries under `lib/`. |
+| Launch the rebuilt copy | `java -jar build/portable/BankingSystem.jar` | Runs the version produced by the most recent portable build. |
 
-Launch your rebuilt version with `java -jar build/portable/BankingSystem.jar`. In IntelliJ IDEA, open the folder containing `build.gradle`, import the Gradle project and run `BankingApplication.main`.
-
-For a guided reading exercise, set a breakpoint in `TransactionService.transfer`, run `BankingWorkflowTest.transferWritesTwoMatchingEntriesAndSurvivesRestart`, and inspect the two `BankAccount` objects as you step through the debit, credit and ledger entries.
+On Windows, use `.\gradlew.bat` for the Gradle commands. For an executable example of the payment flow, open [BankingWorkflowTest](src/test/java/com/abhijai/banking/service/BankingWorkflowTest.java) and run `transferWritesTwoMatchingEntriesAndSurvivesRestart`. Its assertions show exactly which balances, entries and reference should survive a restart.
