@@ -9,5 +9,6 @@ public interface BankingRepository {
 
     void save(BankingState state);
 
+    /** Apply a change to a fresh snapshot and commit it only if the operation returns normally. */
     <T> T update(Function<BankingState, T> operation);
 }

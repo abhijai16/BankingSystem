@@ -1,0 +1,38 @@
+{
+  "schemaVersion" : 1,
+  "customers" : [ {
+    "customerId" : "b0ffaf14-e700-4955-b173-ed3bf62d0607",
+    "loginId" : "9339",
+    "passwordHash" : "pbkdf2-sha256$600000$uud8/XPK6ayxIdZlfDapTg==$w9JI4KUGJNREPMf3+oppihenneRpPpAoMSMLIXCUNCA=",
+    "createdAt" : "2026-11-22T21:14:43.508772746Z",
+    "failedLoginAttempts" : 0,
+    "lockedUntil" : null
+  } ],
+  "accounts" : [ {
+    "accountNumber" : "2803162943",
+    "ownerCustomerId" : "b0ffaf14-e700-4955-b173-ed3bf62d0607",
+    "balance" : {
+      "amount" : 4000.00,
+      "currency" : "INR"
+    },
+    "status" : "ACTIVE",
+    "openedAt" : "2026-11-22T21:21:06.562444064Z",
+    "closedAt" : null
+  } ],
+  "transactions" : [ {
+    "transactionId" : "f9e30760-af6b-4195-9358-7781f7c3b44b",
+    "accountNumber" : "2803162943",
+    "type" : "DEPOSIT",
+    "amount" : {
+      "amount" : 4000.00,
+      "currency" : "INR"
+    },
+    "resultingBalance" : {
+      "amount" : 4000.00,
+      "currency" : "INR"
+    },
+    "timestamp" : "2026-11-22T21:21:06.562444064Z",
+    "transferReference" : null
+  } ],
+  "transfers" : [ ]
+}

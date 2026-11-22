@@ -16,8 +16,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public record BankingStateDto(int schemaVersion, List<CustomerDto> customers,
-                              List<BankAccountDto> accounts, List<TransactionRecordDto> transactions,
-                              List<TransferDto> transfers) {
+                             List<BankAccountDto> accounts, List<TransactionRecordDto> transactions,
+                             List<TransferDto> transfers) {
     public static BankingStateDto from(BankingState state) {
         return new BankingStateDto(state.getSchemaVersion(),
                 new TreeMap<>(state.getCustomers()).values().stream().map(CustomerDto::from).toList(),
